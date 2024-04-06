@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="../../dist/vue.js"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      const { h, Comment, Text, Fragment } = Vue
+      const fragmenttnode = h(
+        'div',
+        { class: ['pink', { red: true }, ['blue', { black: true }]] },
+        'Fragment'
+      )
+      console.log(fragmenttnode)
+      // render(fragmenttnode, document.querySelector('#app'))
+    </script>
+  </body>
+</html>
