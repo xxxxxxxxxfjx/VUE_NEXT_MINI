@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      console.log(document.querySelector('#app'))
+      const VNode1 = {
+        type: 'div',
+        children: 'hello VNode'
+      }
+
+      const VNode2 = {
+        type: 'div',
+        children: 'patch VNode'
+      }
+      function render(oldVNode, newVNode, el) {
+        if (!oldVNode) {
+          mount(newVNode, el)
+        } else {
+          patch(oldVNode, newVNode, el)
+        }
+
+        function mount(VNode, el) {
+          const VNodeRootEl = document.createElement(VNode.type)
+          VNodeRootEl.innerText = VNode.children
+          el.appendChild(VNodeRootEl)
+        }
+        function unmount(el) {
+          el.innerHTML = ''
+        }
+        function patch(oldVNode, newVNode, el) {
+          unmount(el)
+          const VNodeRootEl = document.createElement(newVNode.type)
+          VNodeRootEl.innerText = newVNode.children
+          el.appendChild(VNodeRootEl)
+        }
+      }
+      render(null, VNode1, document.querySelector('#app'))
+      setTimeout(() => {
+        render(VNode1, VNode2, document.querySelector('#app'))
+      }, 2000)
+    </script>
+  </body>
+</html>

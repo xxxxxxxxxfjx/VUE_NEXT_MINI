@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="../../dist/vue.js"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      const { reactive, watch, queuePreFlushCb } = Vue
+      const obj = reactive({
+        count: 1
+      })
+      watch(
+        obj,
+        (newVal, oldVal) => {
+          console.log('watch 监听被触发')
+          console.log('value', newVal)
+        },
+        {
+          immediate: true
+        }
+      )
+      setTimeout(() => {
+        obj.count = 10
+      }, 2000)
+    </script>
+  </body>
+</html>

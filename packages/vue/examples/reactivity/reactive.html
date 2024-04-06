@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="../../dist/vue.js"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      const { reactive, effect } = Vue
+      const obj = reactive({
+        name: 'lisi'
+      })
+      effect(() => {
+        document.querySelector('#app').innerHTML = obj.name
+      })
+      setTimeout(() => {
+        obj.name = 'zs'
+      }, 2000)
+
+      const obj1 = {
+        name: 'lisi'
+      }
+      const a = new Proxy(obj1, {
+        set(target, key, newVal, receiver) {
+          const res = Reflect.set(target, key, newVal)
+          return res
+        }
+      })
+
+      console.log(a)
+      console.log(obj1)
+    </script>
+  </body>
+</html>
