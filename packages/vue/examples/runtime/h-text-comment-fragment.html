@@ -9,13 +9,11 @@
   <body>
     <div id="app"></div>
     <script>
-      const { render, h, Comment, Text, Fragment } = Vue
-      // const textnode = h(Text, 'Text')
-      // console.log(textnode)
-      // const commentnode = h(Comment, 'Comment')
-      // console.log(commentnode)
-      const fragmenttnode = h(Fragment, 'Fragment')
-      console.log(fragmenttnode)
+      const { h, render, Text, Comment, Fragment } = Vue
+      const vnodeText = h(Text, '这是一个 Text')
+      console.log(vnodeText)
+      // 可以通过 render 进行渲染
+      render(vnodeText, document.querySelector('#app'))
     </script>
   </body>
 </html>

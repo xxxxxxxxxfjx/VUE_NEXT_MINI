@@ -626,11 +626,39 @@ var Vue = (function (exports) {
         }
     }
 
+    function patchStyle(el, prev, next) {
+        // 获取元素样式
+        var style = el.style;
+        // 判断next样式类型
+        var isCssString = isString(next);
+        // next存在，且不是字符串类型
+        if (next && !isCssString) {
+            // 设置新的样式
+            for (var key in next) {
+                setStyle(style, key, next[key]);
+            }
+            // 遍历旧样式，删除不存在于新样式中的旧样式
+            if (prev && !isString(prev)) {
+                for (var key in prev) {
+                    if (next[key] == null) {
+                        setStyle(style, key, '');
+                    }
+                }
+            }
+        }
+    }
+    function setStyle(style, name, value) {
+        // 设置样式值
+        style[name] = value;
+    }
+
     function patchProp(el, key, prevValue, nextValue) {
         if (key === 'class') {
             patchClass(el, nextValue);
         }
-        else if (key === 'style') ;
+        else if (key === 'style') {
+            patchStyle(el, prevValue, nextValue);
+        }
         else if (isOn(key)) ;
         else if (shouldSetAsProp(el, key)) {
             patchDOMProp(el, key, nextValue);
