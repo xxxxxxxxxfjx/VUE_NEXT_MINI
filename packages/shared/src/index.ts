@@ -23,3 +23,8 @@ const onReg = /^on[^a-z]/
 export const isOn = (value: string): boolean => {
   return onReg.test(value)
 }
+
+// 是否是v-mode值变化时触发的update事件
+export const isModelListener = (key: string) => {
+  return key.startsWith('onUpdate:')
+}

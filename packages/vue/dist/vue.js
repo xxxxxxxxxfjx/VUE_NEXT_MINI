@@ -20,6 +20,10 @@ var Vue = (function (exports) {
     var isOn = function (value) {
         return onReg.test(value);
     };
+    // 是否是v-mode值变化时触发的update事件
+    var isModelListener = function (key) {
+        return key.startsWith('onUpdate:');
+    };
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -652,6 +656,41 @@ var Vue = (function (exports) {
         style[name] = value;
     }
 
+    function patchEvent(el, rowName, prevValue, nextValue) {
+        // 获取挂载在el上存储事件的对象
+        var invokers = el._vei || (el._vei = {});
+        // 获取当前rowName对应的值
+        var existingInvoker = invokers[rowName];
+        if (nextValue && existingInvoker) {
+            // 事件更新
+            existingInvoker.value = nextValue;
+        }
+        else {
+            // 获取事件的小写，用在addEventListener函数中
+            var name_1 = parseName(rowName);
+            if (nextValue) {
+                // 新增事件
+                var invoker = (invokers[rowName] = createInvoker(nextValue));
+                el.addEventListener(name_1, invoker);
+            }
+            else if (existingInvoker) {
+                // 删除事件
+                el.removeEventListener(name_1, existingInvoker);
+                invokers[rowName] = undefined;
+            }
+        }
+    }
+    function parseName(name) {
+        return name.slice(2).toLocaleLowerCase();
+    }
+    function createInvoker(initialInvoker) {
+        var invoker = function () {
+            invoker.value();
+        };
+        invoker.value = initialInvoker;
+        return invoker;
+    }
+
     function patchProp(el, key, prevValue, nextValue) {
         if (key === 'class') {
             patchClass(el, nextValue);
@@ -659,7 +698,11 @@ var Vue = (function (exports) {
         else if (key === 'style') {
             patchStyle(el, prevValue, nextValue);
         }
-        else if (isOn(key)) ;
+        else if (isOn(key)) {
+            if (!isModelListener(key)) {
+                patchEvent(el, key, prevValue, nextValue);
+            }
+        }
         else if (shouldSetAsProp(el, key)) {
             patchDOMProp(el, key, nextValue);
         }
