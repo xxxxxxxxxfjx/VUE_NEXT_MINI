@@ -551,6 +551,11 @@ var Vue = (function (exports) {
                         hostPatchProp(el, key, prev, next);
                     }
                 }
+                if (oldProps !== EMPTY_OBJ) {
+                    for (var key in oldProps) {
+                        hostPatchProp(el, key, oldProps[key], null);
+                    }
+                }
             }
         };
         var processElement = function (oldVNode, newVNode, container, anchor) {

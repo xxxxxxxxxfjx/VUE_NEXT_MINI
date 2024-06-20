@@ -93,6 +93,11 @@ function baseCreateRenderer(options: RendererOptions) {
           hostPatchProp(el, key, prev, next)
         }
       }
+      if (oldProps !== EMPTY_OBJ) {
+        for (const key in oldProps) {
+          hostPatchProp(el, key, oldProps[key], null)
+        }
+      }
     }
   }
 
