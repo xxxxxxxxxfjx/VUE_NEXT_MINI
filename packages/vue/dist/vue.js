@@ -472,6 +472,19 @@ var Vue = (function (exports) {
     function isSameVNodeType(n1, n2) {
         return n1.type === n2.type && n1.key === n2.key;
     }
+    function cloneIfMounted(child) {
+        return child;
+    }
+    // 将子元素标准化成vnode的形式
+    function normalizeVNode(child) {
+        if (typeof child === 'object') {
+            // 对象类型默认就是标准化的，直接返回
+            return cloneIfMounted(child);
+        }
+        else {
+            return createVNode(Text, null, String(child));
+        }
+    }
 
     function h(type, propsOrChildren, children) {
         var l = arguments.length;
@@ -501,7 +514,7 @@ var Vue = (function (exports) {
         return baseCreateRenderer(options);
     }
     function baseCreateRenderer(options) {
-        var hostInsert = options.insert, hostCreateElement = options.createElement, hostPatchProp = options.patchProp, hostSetElementText = options.setElementText, hostRemove = options.remove;
+        var hostInsert = options.insert, hostCreateElement = options.createElement, hostPatchProp = options.patchProp, hostSetElementText = options.setElementText, hostSetText = options.setText, hostRemove = options.remove, hostCreateText = options.createText, hostCreateComment = options.creatComment;
         // element的挂载操作
         var mountElement = function (vnode, container, anchor) {
             /**
@@ -568,6 +581,43 @@ var Vue = (function (exports) {
                 patchElement(oldVNode, newVNode);
             }
         };
+        var processText = function (oldVNode, newVNode, container, anchor) {
+            if (oldVNode == null) {
+                hostInsert((newVNode.el = hostCreateText(newVNode.children)), container, anchor);
+            }
+            else {
+                var el = (newVNode.el = oldVNode.el);
+                if (newVNode.children !== oldVNode.children) {
+                    hostSetText(el, newVNode.children);
+                }
+            }
+        };
+        var processCommentNode = function (oldVNode, newVNode, container, anchor) {
+            if (oldVNode == null) {
+                hostInsert((newVNode.el = hostCreateComment(newVNode.children)), container, anchor);
+            }
+            else {
+                // comment不存在更新操作
+                newVNode.el = oldVNode.el;
+            }
+        };
+        var mountChildren = function (children, container, anchor) {
+            if (isString(children)) {
+                children = children.split('');
+            }
+            for (var i = 0; i < children.length; i++) {
+                var child = (children[i] = normalizeVNode(children[i]));
+                patch(null, child, container, anchor);
+            }
+        };
+        var processFragment = function (oldVNode, newVNode, container, anchor) {
+            if (oldVNode == null) {
+                mountChildren(newVNode.children, container, anchor);
+            }
+            else {
+                patchChildren(oldVNode, newVNode, container);
+            }
+        };
         var patch = function (oldVNode, newVNode, container, anchor) {
             if (anchor === void 0) { anchor = null; }
             if (oldVNode === newVNode) {
@@ -580,10 +630,13 @@ var Vue = (function (exports) {
             var type = newVNode.type, shapeFlag = newVNode.shapeFlag;
             switch (type) {
                 case Text:
+                    processText(oldVNode, newVNode, container, anchor);
                     break;
                 case Comment:
+                    processCommentNode(oldVNode, newVNode, container, anchor);
                     break;
                 case Fragment:
+                    processFragment(oldVNode, newVNode, container, anchor);
                     break;
                 default:
                     if (shapeFlag & 1 /* ShapeFlags.ELEMENT */) {
@@ -740,11 +793,20 @@ var Vue = (function (exports) {
         setElementText: function (el, text) {
             el.textContent = text;
         },
+        setText: function (el, text) {
+            el.nodeValue = text;
+        },
         remove: function (child) {
             var parentNode = child.parentNode;
             if (parentNode) {
                 parentNode.removeChild(child);
             }
+        },
+        createText: function (text) {
+            return doc.createTextNode(text);
+        },
+        creatComment: function (text) {
+            return doc.createComment(text);
         }
     };
 

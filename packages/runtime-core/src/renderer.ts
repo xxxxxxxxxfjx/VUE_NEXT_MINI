@@ -1,19 +1,23 @@
-import { EMPTY_OBJ, ShapeFlags } from '@vue/shared'
+import { EMPTY_OBJ, ShapeFlags, isString } from '@vue/shared'
 import {
   Comment,
   Fragment,
   RendererNode,
   Text,
   VNode,
-  isSameVNodeType
+  isSameVNodeType,
+  normalizeVNode
 } from './vnode'
 
 export interface RendererOptions {
-  insert(el: Element, parent: Element, anchor?: Element | null): void
+  insert(el: RendererNode, parent: Element, anchor?: Element | null): void
   createElement(type: string): Element
-  setElementText(node: Element, text: string): void
-  patchProp(el: Element, key: string, prevValue: any, nextValue: any): void
-  remove(el: Element): void
+  setElementText(node: RendererNode, text: string): void
+  patchProp(el: RendererNode, key: string, prevValue: any, nextValue: any): void
+  remove(el: RendererNode): void
+  createText(text: string)
+  setText(el: RendererNode, text: string): void
+  creatComment(text: string): Comment
 }
 
 export function createRenderer(options: RendererOptions) {
@@ -26,7 +30,10 @@ function baseCreateRenderer(options: RendererOptions) {
     createElement: hostCreateElement,
     patchProp: hostPatchProp,
     setElementText: hostSetElementText,
-    remove: hostRemove
+    setText: hostSetText,
+    remove: hostRemove,
+    createText: hostCreateText,
+    creatComment: hostCreateComment
   } = options
 
   // element的挂载操作
@@ -116,6 +123,67 @@ function baseCreateRenderer(options: RendererOptions) {
     }
   }
 
+  const processText = (
+    oldVNode: VNode | null,
+    newVNode: VNode,
+    container: Element,
+    anchor: Element | null
+  ) => {
+    if (oldVNode == null) {
+      hostInsert(
+        (newVNode.el = hostCreateText(newVNode.children as string)),
+        container,
+        anchor
+      )
+    } else {
+      const el = (newVNode.el = oldVNode.el!)
+      if (newVNode.children !== oldVNode.children) {
+        hostSetText(el, newVNode.children)
+      }
+    }
+  }
+
+  const processCommentNode = (
+    oldVNode: VNode | null,
+    newVNode: VNode,
+    container: Element,
+    anchor: Element | null
+  ) => {
+    if (oldVNode == null) {
+      hostInsert(
+        (newVNode.el = hostCreateComment(newVNode.children)),
+        container,
+        anchor
+      )
+    } else {
+      // comment不存在更新操作
+      newVNode.el = oldVNode.el
+    }
+  }
+
+  const mountChildren = (children, container, anchor) => {
+    if (isString(children)) {
+      children = children.split('')
+    }
+    for (let i = 0; i < children.length; i++) {
+      const child = (children[i] = normalizeVNode(children[i]))
+      patch(null, child, container, anchor)
+    }
+  }
+
+  const processFragment = (
+    oldVNode: VNode | null,
+    newVNode: VNode,
+    container: Element,
+    anchor: Element | null
+  ) => {
+    if (oldVNode == null) {
+      mountChildren(newVNode.children, container, anchor)
+    } else {
+      patchChildren(oldVNode, newVNode, container, anchor)
+    }
+  }
+
   const patch = (
     oldVNode: VNode | null,
     newVNode: VNode,
@@ -133,10 +201,13 @@ function baseCreateRenderer(options: RendererOptions) {
     const { type, shapeFlag } = newVNode
     switch (type) {
       case Text:
+        processText(oldVNode, newVNode, container, anchor)
         break
       case Comment:
+        processCommentNode(oldVNode, newVNode, container, anchor)
         break
       case Fragment:
+        processFragment(oldVNode, newVNode, container, anchor)
         break
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {

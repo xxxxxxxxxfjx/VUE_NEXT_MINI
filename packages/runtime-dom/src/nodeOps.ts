@@ -12,10 +12,19 @@ export const nodeOps: Omit<RendererOptions, 'patchProp'> = {
   setElementText: (el: Element, text: string) => {
     el.textContent = text
   },
+  setText: (el, text: string) => {
+    el.nodeValue = text
+  },
   remove: (child: Element) => {
     const parentNode = child.parentNode
     if (parentNode) {
       parentNode.removeChild(child)
     }
+  },
+  createText: (text: string) => {
+    return doc.createTextNode(text)
+  },
+  creatComment: (text: string): Comment => {
+    return doc.createComment(text)
   }
 }

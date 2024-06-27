@@ -14,7 +14,7 @@ export interface VNode {
   children: any
   shapeFlag: number
   props: any
-  el: RendererNode & Element
+  el: any
   key: any
 }
 
@@ -95,4 +95,18 @@ export function normalizeClass(value: any): string {
 
 export function isSameVNodeType(n1: VNode, n2: VNode) {
   return n1.type === n2.type && n1.key === n2.key
+}
+
+export function cloneIfMounted(child) {
+  return child
+}
+
+// 将子元素标准化成vnode的形式
+export function normalizeVNode(child) {
+  if (typeof child === 'object') {
+    // 对象类型默认就是标准化的，直接返回
+    return cloneIfMounted(child)
+  } else {
+    return createVNode(Text, null, String(child))
+  }
 }
